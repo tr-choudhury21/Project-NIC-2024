@@ -8,6 +8,7 @@ import com.projectapi.Project_NIC.model.Review;
 import com.projectapi.Project_NIC.repository.ArchiveRepository;
 import com.projectapi.Project_NIC.repository.DocumentRepository;
 import com.projectapi.Project_NIC.repository.ReviewRepository;
+import lombok.RequiredArgsConstructor;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -29,23 +30,17 @@ import java.util.*;
 import java.util.logging.Logger;
 
 @Service
+@RequiredArgsConstructor
 public class DocumentService {
 
-    @Autowired
     private final DocumentRepository documentRepository;
     private final MongoTemplate mongoTemplate;
-    @Autowired
-    private ReviewRepository reviewRepository;
+    private final ReviewRepository reviewRepository;
+    private final ArchiveRepository archiveRepository;
+
     private static final Logger LOGGER = Logger.getLogger(DocumentService.class.getName());
 
-    @Autowired
-    public DocumentService(DocumentRepository documentRepository, MongoTemplate mongoTemplate) {
-        this.documentRepository = documentRepository;
-        this.mongoTemplate = mongoTemplate;
-    }
 
-    @Autowired
-    public ArchiveRepository archiveRepository;
 
     public UUID saveDocument(ClientDocument document) {
         document.setDocument_id(UUID.randomUUID());
