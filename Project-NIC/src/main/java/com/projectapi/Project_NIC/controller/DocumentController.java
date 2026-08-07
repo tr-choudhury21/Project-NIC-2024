@@ -19,13 +19,14 @@ import java.util.UUID;
 @RequestMapping("/")
 public class DocumentController {
     private final DocumentService documentService;
+    private final DocumentRepository documentRepository;
 
-    @Autowired
-    private  DocumentRepository documentRepository;
+    public DocumentController(
+            DocumentService documentService,
+            DocumentRepository documentRepository) {
 
-    @Autowired
-    public DocumentController(DocumentService documentService) {
         this.documentService = documentService;
+        this.documentRepository = documentRepository;
     }
 
 
