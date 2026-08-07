@@ -3,6 +3,7 @@ package com.projectapi.Project_NIC.controller;
 import com.projectapi.Project_NIC.model.*;
 import com.projectapi.Project_NIC.repository.DocumentRepository;
 import com.projectapi.Project_NIC.service.DocumentService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,17 +18,9 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/")
+@RequiredArgsConstructor
 public class DocumentController {
     private final DocumentService documentService;
-    private final DocumentRepository documentRepository;
-
-    public DocumentController(
-            DocumentService documentService,
-            DocumentRepository documentRepository) {
-
-        this.documentService = documentService;
-        this.documentRepository = documentRepository;
-    }
 
 
     //to save a document
@@ -61,7 +54,7 @@ public class DocumentController {
     //to review the client's document
     @PostMapping("/reviewdocument")
     public ResponseEntity<?> saveOrUpdateReview(@RequestBody Review review) {
-        Optional<ClientDocument> clientdocumentOptional = documentRepository.findByApplicationTransactionId(review.getApplication_transaction_id());
+        Optional<ClientDocument> clientdocumentOptional = documentService.getDocumentByApplicationTransactionId(review.getApplication_transaction_id());
 
         if (clientdocumentOptional.isPresent()) {
             review.setApplication_transaction_id(clientdocumentOptional.get().getFile_information().getApplication_transaction_id());
@@ -77,7 +70,7 @@ public class DocumentController {
     //to archive any document
     @PostMapping("/archivedocument")
     public ResponseEntity<?> archiveDocument(@RequestBody ArchiveDocument archiveDocument) {
-        Optional<ClientDocument> clientDocumentOptional = documentRepository.findByApplicationTransactionId(archiveDocument.getApplication_transaction_id());
+        Optional<ClientDocument> clientDocumentOptional = documentService.getDocumentByApplicationTransactionId(archiveDocument.getApplication_transaction_id());
 
         if (clientDocumentOptional.isPresent()) {
             ArchiveDocument savedArchiveDocument = documentService.archiveDocument(archiveDocument);

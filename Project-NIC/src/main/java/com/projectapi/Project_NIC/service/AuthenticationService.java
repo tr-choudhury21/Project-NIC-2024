@@ -53,5 +53,27 @@ public class AuthenticationService {
         var jwtToken = jwtService.generateToken(user);
         return AuthenticationResponse.builder().token(jwtToken).build();
     }
+
+    public AuthenticationResponse init(AuthenticationRequest request) {
+
+        if (clientRepository
+                .findByClientId(request.getClient_id())
+                .isPresent()) {
+
+            return authenticate(request);
+
+        }
+
+        RegisterRequest registerRequest = new RegisterRequest();
+
+        registerRequest.setClient_id(request.getClient_id());
+        registerRequest.setClient_secret(request.getClient_secret());
+
+        return register(registerRequest);
+    }
+
+    public boolean clientExists(String clientId) {
+        return clientRepository.findByClientId(clientId).isPresent();
+    }
 }
 

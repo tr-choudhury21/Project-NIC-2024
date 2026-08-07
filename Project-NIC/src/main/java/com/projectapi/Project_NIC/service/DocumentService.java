@@ -67,6 +67,14 @@ public class DocumentService {
 
     }
 
+    public Optional<ClientDocument> getDocumentByApplicationTransactionId(
+            long applicationTransactionId) {
+
+        return documentRepository.findByApplicationTransactionId(
+                applicationTransactionId
+        );
+    }
+
     public Review saveOrUpdateReview(Review review) {
         Optional<Review> existingReview = reviewRepository.findByApplicationTransactionId(review.getApplication_transaction_id());
 

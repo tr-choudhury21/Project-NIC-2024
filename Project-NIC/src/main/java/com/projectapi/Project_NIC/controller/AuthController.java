@@ -18,33 +18,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthenticationService service;
-
-
-    private final ClientRepository clientRepository;
+    private final AuthenticationService authenticationService;
 
     @PostMapping("/init")
     public ResponseEntity<AuthenticationResponse> init(@RequestBody AuthenticationRequest request){
-        if(clientRepository.findByClientId(request.getClient_id()).isPresent()){
-            try {
-                AuthenticationResponse response = service.authenticate(request);
-                return new ResponseEntity<>(response, HttpStatus.OK);
+        AuthenticationResponse response =
+                authenticationService.init(request);
 
-            }catch (Exception e){
-                return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-            }
-        }else{
-            RegisterRequest registerRequest = new RegisterRequest();
-            registerRequest.setClient_id(request.getClient_id());
-            registerRequest.setClient_secret(request.getClient_secret());
+        return ResponseEntity.ok(response);
 
-            try {
-                AuthenticationResponse response = service.register(registerRequest);
-                return new ResponseEntity<>(response , HttpStatus.CREATED);
-            }catch (Exception e){
-                return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-            }
-        }
     }
 }
 
