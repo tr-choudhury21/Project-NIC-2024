@@ -32,11 +32,13 @@ public class DocumentController {
 
     //to get a document
     @GetMapping("/getdocument/{id}")
-    public ResponseEntity<ClientDocument> getDocument(@PathVariable("id") UUID document_id){
-        System.out.println("received request for document ID: " + document_id);
-        ResponseEntity<ClientDocument> document = documentService.getDocumentById(document_id);
+    public ResponseEntity<ClientDocument> getDocument(@PathVariable("id") UUID documentId){
+        System.out.println("received request for document ID: " + documentId);
 
-        return ResponseEntity.ok(document.getBody());
+        return documentService
+                .getDocumentById(documentId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     //to get a document of particular client
@@ -54,48 +56,30 @@ public class DocumentController {
     //to review the client's document
     @PostMapping("/reviewdocument")
     public ResponseEntity<?> saveOrUpdateReview(@RequestBody Review review) {
-        Optional<ClientDocument> clientdocumentOptional = documentService.getDocumentByApplicationTransactionId(review.getApplication_transaction_id());
 
-        if (clientdocumentOptional.isPresent()) {
-            review.setApplication_transaction_id(clientdocumentOptional.get().getFile_information().getApplication_transaction_id());
-            Review savedReview = documentService.saveOrUpdateReview(review);
+        Review savedReview = documentService.createOrUpdateReview(review);
 
-            return ResponseEntity.ok(savedReview);
-        }else{
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(savedReview);
     }
 
 
     //to archive any document
     @PostMapping("/archivedocument")
     public ResponseEntity<?> archiveDocument(@RequestBody ArchiveDocument archiveDocument) {
-        Optional<ClientDocument> clientDocumentOptional = documentService.getDocumentByApplicationTransactionId(archiveDocument.getApplication_transaction_id());
 
-        if (clientDocumentOptional.isPresent()) {
-            ArchiveDocument savedArchiveDocument = documentService.archiveDocument(archiveDocument);
-            return ResponseEntity.ok(savedArchiveDocument);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        ArchiveDocument savedArchiveDocument = documentService.createArchive(archiveDocument);
+
+        return ResponseEntity.ok(savedArchiveDocument);
     }
 
 
     //to edit & update the document
     @PostMapping("/editdocumentinfo/{documentId}")
     public ResponseEntity<?> editDocumentInfo(@PathVariable UUID documentId, @RequestBody ClientDocument newDocument) {
-        ResponseEntity<ClientDocument> responseEntity = documentService.getDocumentById(documentId);
 
-        if (responseEntity.getStatusCode() == HttpStatus.OK && responseEntity.getBody() != null) {
-            documentService.deleteDocumentById(documentId);
+        ClientDocument savedDocument = documentService.updateDocument(documentId, newDocument);
 
-            newDocument.setDocument_id(documentId);
-            ClientDocument savedDocument = documentService.updateDocument(newDocument);
-
-            return ResponseEntity.ok(savedDocument);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(savedDocument);
     }
 
 

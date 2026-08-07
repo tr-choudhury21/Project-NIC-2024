@@ -52,12 +52,24 @@ public class DocumentService {
         return document.getDocument_id();
     }
 
-    public ResponseEntity<ClientDocument> getDocumentById(UUID documentId) {
-        System.out.println("searching for document id: " + documentId);
-        ClientDocument document = documentRepository.findById(documentId).orElse(null);
+    public ClientDocument updateDocument(
+            UUID documentId,
+            ClientDocument newDocument) {
 
-        System.out.println("Document found : " + document);
-        return ResponseEntity.ok(document);
+        Optional<ClientDocument> existingDocument =
+                documentRepository.findById(documentId);
+
+        if (existingDocument.isEmpty()) {
+            throw new RuntimeException("Document not found");
+        }
+
+        newDocument.setDocument_id(documentId);
+
+        return documentRepository.save(newDocument);
+    }
+
+    public Optional<ClientDocument> getDocumentById(UUID documentId) {
+        return documentRepository.findById(documentId);
 
     }
 
@@ -88,6 +100,26 @@ public class DocumentService {
         return reviewRepository.save(review);
     }
 
+    public Review createOrUpdateReview(Review review) {
+
+        Optional<ClientDocument> clientDocument =
+                documentRepository.findByApplicationTransactionId(
+                        review.getApplication_transaction_id()
+                );
+
+        if (clientDocument.isEmpty()) {
+            throw new RuntimeException("Document not found");
+        }
+
+        review.setApplication_transaction_id(
+                clientDocument.get()
+                        .getFile_information()
+                        .getApplication_transaction_id()
+        );
+
+        return saveOrUpdateReview(review);
+    }
+
     public ArchiveDocument archiveDocument(ArchiveDocument archiveDocument) {
 
         Optional<ArchiveDocument> existingArchive = archiveRepository.findByApplicationTransactionId(archiveDocument.getApplication_transaction_id());
@@ -102,6 +134,20 @@ public class DocumentService {
         archivedDocument.ifPresent(document -> documentRepository.deleteById(document.getDocument_id()));
 
         return archiveRepository.save(archiveDocument);
+    }
+
+    public ArchiveDocument createArchive(ArchiveDocument archiveDocument) {
+
+        Optional<ClientDocument> clientDocument =
+                documentRepository.findByApplicationTransactionId(
+                        archiveDocument.getApplication_transaction_id()
+                );
+
+        if (clientDocument.isEmpty()) {
+            throw new RuntimeException("Document not found");
+        }
+
+        return archiveDocument(archiveDocument);
     }
 
     public void deleteDocumentById(UUID documentId) {
