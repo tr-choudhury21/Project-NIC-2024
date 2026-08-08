@@ -1,11 +1,11 @@
 package com.projectapi.Project_NIC.service;
 
+import com.projectapi.Project_NIC.dto.request.*;
 import com.projectapi.Project_NIC.exception.DocumentNotFoundException;
 import com.projectapi.Project_NIC.exception.DocumentProcessingException;
 import com.projectapi.Project_NIC.model.ArchiveDocument;
 import com.projectapi.Project_NIC.model.ClientDocument;
 
-import com.projectapi.Project_NIC.model.PdfPasswordRequest;
 import com.projectapi.Project_NIC.model.Review;
 import com.projectapi.Project_NIC.repository.ArchiveRepository;
 import com.projectapi.Project_NIC.repository.DocumentRepository;
@@ -17,11 +17,8 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
 import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
-import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.util.Matrix;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
@@ -44,32 +41,53 @@ public class DocumentService {
 
 
 
-    public UUID saveDocument(ClientDocument document) {
-        document.setDocument_id(UUID.randomUUID());
+    public UUID saveDocument(CreateDocumentRequest request) {
 
-        Date date = new Date();
-        document.setCreated_on(date);
+        ClientDocument document = new ClientDocument();
+
+        document.setDocument_id(UUID.randomUUID());
+        document.setCreated_on(new Date());
+
+        document.setApplication(request.getApplication());
+        document.setModule(request.getModule());
+        document.setWorkflow(request.getWorkflow());
+        document.setFile_information(request.getFileInformation());
+        document.setCreated_by(request.getCreatedBy());
+        document.setCreated_for(request.getCreatedFor());
+        document.setDocument(request.getDocument());
+        document.setAdditional_info_1(request.getAdditionalInfo1());
+        document.setAdditional_info_2(request.getAdditionalInfo2());
 
         documentRepository.save(document);
+
         return document.getDocument_id();
     }
 
     public ClientDocument updateDocument(
             UUID documentId,
-            ClientDocument newDocument) {
+            UpdateDocumentRequest request) {
 
-        Optional<ClientDocument> existingDocument =
-                documentRepository.findById(documentId);
+        ClientDocument existingDocument =
+                documentRepository.findById(documentId)
+                        .orElseThrow(() ->
+                                new DocumentNotFoundException(
+                                        "Document not found with id: "
+                                                + documentId
+                                )
+                        );
 
-        if (existingDocument.isEmpty()) {
-            throw new DocumentNotFoundException(
-                    "Document not found with id: " + documentId
-            );
-        }
 
-        newDocument.setDocument_id(documentId);
+        existingDocument.setApplication(request.getApplication());
+        existingDocument.setModule(request.getModule());
+        existingDocument.setWorkflow(request.getWorkflow());
+        existingDocument.setFile_information(request.getFileInformation());
+        existingDocument.setCreated_by(request.getCreatedBy());
+        existingDocument.setCreated_for(request.getCreatedFor());
+        existingDocument.setDocument(request.getDocument());
+        existingDocument.setAdditional_info_1(request.getAdditionalInfo1());
+        existingDocument.setAdditional_info_2(request.getAdditionalInfo2());
 
-        return documentRepository.save(newDocument);
+        return documentRepository.save(existingDocument);
     }
 
     public ClientDocument getDocumentById(UUID documentId) {
@@ -109,19 +127,21 @@ public class DocumentService {
         return reviewRepository.save(review);
     }
 
-    public Review createOrUpdateReview(Review review) {
+    public Review createOrUpdateReview(ReviewRequest request) {
 
         Optional<ClientDocument> clientDocument =
                 documentRepository.findByApplicationTransactionId(
-                        review.getApplication_transaction_id()
+                        request.getApplicationTransactionId()
                 );
 
         if (clientDocument.isEmpty()) {
             throw new DocumentNotFoundException(
                     "Document not found for application transaction id: "
-                            + review.getApplication_transaction_id()
+                            + request.getApplicationTransactionId()
             );
         }
+
+        Review review = new Review();
 
         review.setApplication_transaction_id(
                 clientDocument.get()
@@ -129,40 +149,59 @@ public class DocumentService {
                         .getApplication_transaction_id()
         );
 
+        review.setReview(request.getReview());
+
         return saveOrUpdateReview(review);
     }
 
-    public ArchiveDocument archiveDocument(ArchiveDocument archiveDocument) {
+    public ArchiveDocument archiveDocument(ArchiveDocumentRequest request) {
 
-        Optional<ArchiveDocument> existingArchive = archiveRepository.findByApplicationTransactionId(archiveDocument.getApplication_transaction_id());
-        Optional<ClientDocument> archivedDocument = documentRepository.findByApplicationTransactionId(archiveDocument.getApplication_transaction_id());
+        Optional<ArchiveDocument> existingArchive = archiveRepository.findByApplicationTransactionId(request.getApplicationTransactionId());
+        Optional<ClientDocument> existingDocument = documentRepository.findByApplicationTransactionId(request.getApplicationTransactionId());
 
         if (existingArchive.isPresent()) {
-            ArchiveDocument archivedoc = existingArchive.get();
-            archivedoc.setArchival_comments(archiveDocument.getArchival_comments());
-            return archiveRepository.save(archivedoc);
+
+            ArchiveDocument archiveDocument = existingArchive.get();
+
+            archiveDocument.setArchival_comments(
+                    request.getArchivalComments()
+            );
+
+            return archiveRepository.save(archiveDocument);
         }
 
-        archivedDocument.ifPresent(document -> documentRepository.deleteById(document.getDocument_id()));
+        existingDocument.ifPresent(document ->
+                documentRepository.deleteById(document.getDocument_id())
+        );
+
+        ArchiveDocument archiveDocument = new ArchiveDocument();
+
+        archiveDocument.setApplication_transaction_id(
+                request.getApplicationTransactionId()
+        );
+
+        archiveDocument.setArchival_comments(
+                request.getArchivalComments()
+        );
 
         return archiveRepository.save(archiveDocument);
     }
 
-    public ArchiveDocument createArchive(ArchiveDocument archiveDocument) {
+    public ArchiveDocument createArchive(ArchiveDocumentRequest request) {
 
         Optional<ClientDocument> clientDocument =
                 documentRepository.findByApplicationTransactionId(
-                        archiveDocument.getApplication_transaction_id()
+                        request.getApplicationTransactionId()
                 );
 
         if (clientDocument.isEmpty()) {
             throw new DocumentNotFoundException(
                     "Document not found for application transaction id: "
-                            + archiveDocument.getApplication_transaction_id()
+                            + request.getApplicationTransactionId()
             );
         }
 
-        return archiveDocument(archiveDocument);
+        return archiveDocument(request);
     }
 
     public void deleteDocumentById(UUID documentId) {
@@ -253,12 +292,12 @@ public class DocumentService {
 
 
     public String addPasswordToPdf(PdfPasswordRequest request) {
-        Optional<ClientDocument> existingDocument = documentRepository.findByApplicationTransactionId(request.getApplication_transaction_id());
+        Optional<ClientDocument> existingDocument = documentRepository.findByApplicationTransactionId(request.getApplicationTransactionId());
 
         if (existingDocument.isEmpty()) {
             throw new DocumentNotFoundException(
                     "Document not found for application transaction id: "
-                            + request.getApplication_transaction_id()
+                            + request.getApplicationTransactionId()
             );
         }
 
