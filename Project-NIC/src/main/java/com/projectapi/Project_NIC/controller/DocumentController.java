@@ -1,5 +1,6 @@
 package com.projectapi.Project_NIC.controller;
 
+import com.projectapi.Project_NIC.exception.DocumentProcessingException;
 import com.projectapi.Project_NIC.model.*;
 import com.projectapi.Project_NIC.repository.DocumentRepository;
 import com.projectapi.Project_NIC.service.DocumentService;
@@ -35,10 +36,8 @@ public class DocumentController {
     public ResponseEntity<ClientDocument> getDocument(@PathVariable("id") UUID documentId){
         System.out.println("received request for document ID: " + documentId);
 
-        return documentService
-                .getDocumentById(documentId)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(documentService.getDocumentById(documentId));
+
     }
 
     //to get a document of particular client
@@ -105,25 +104,22 @@ public class DocumentController {
     //to add watermark to any document
     @PostMapping("/addwatermarktodocument")
     public ResponseEntity<?> addWatermarkToDocument(@RequestBody WatermarkRequest watermarkRequest){
-        try {
-            ClientDocument updatedDocument = documentService.addWatermarkToDocument(watermarkRequest.getApplication_transaction_id(),
-                    watermarkRequest.getWatermark());
-            return new ResponseEntity<>(updatedDocument, HttpStatus.OK);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        ClientDocument updatedDocument =
+                documentService.addWatermarkToDocument(
+                        watermarkRequest.getApplication_transaction_id(),
+                        watermarkRequest.getWatermark()
+                );
+
+        return ResponseEntity.ok(updatedDocument);
     }
 
     //to set password & make any document confidential
     @PostMapping("/setadocumentconfidential")
     public ResponseEntity<?> addPasswordToPdf(@RequestBody PdfPasswordRequest request) {
-        try {
-            String base64PdfWithPassword = documentService.addPasswordToPdf(request);
-            return ResponseEntity.ok(base64PdfWithPassword);
-        } catch (IOException e) {
-            return ResponseEntity.status(500).body("Failed to add password to PDF: " + e.getMessage());
-        }
+        String base64PdfWithPassword =
+                documentService.addPasswordToPdf(request);
+
+        return ResponseEntity.ok(base64PdfWithPassword);
     }
 
 }
