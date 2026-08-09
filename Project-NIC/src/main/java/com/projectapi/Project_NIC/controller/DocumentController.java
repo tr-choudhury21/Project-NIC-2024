@@ -15,42 +15,38 @@ import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/")
+@RequestMapping("/api/v1/documents")
 @RequiredArgsConstructor
 public class DocumentController {
     private final DocumentService documentService;
 
 
     //to save a document
-    @PostMapping("/savedocument")
+    @PostMapping
     public ResponseEntity<UUID> saveDocument(@Valid @RequestBody CreateDocumentRequest request) {
         UUID documentId = documentService.saveDocument(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(documentId);
     }
 
     //to get a document
-    @GetMapping("/getdocument/{id}")
-    public ResponseEntity<ClientDocument> getDocument(@PathVariable("id") UUID documentId){
-        System.out.println("received request for document ID: " + documentId);
+    @GetMapping("/{documentId}")
+    public ResponseEntity<ClientDocument> getDocumentById(@PathVariable UUID documentId){
+//        System.out.println("received request for document ID: " + documentId);
 
         return ResponseEntity.ok(documentService.getDocumentById(documentId));
 
     }
 
     //to get a document of particular client
-    @GetMapping("/documentofaperson/{personId}")
+    @GetMapping("/person/{personId}")
     public ResponseEntity<List<ClientDocument>> getDocumentsByPersonId(@PathVariable("personId") int personId) {
         List<ClientDocument> documents = documentService.getDocumentsByPersonId(personId);
 
-        if (documents.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        } else {
-            return ResponseEntity.ok(documents);
-        }
+        return ResponseEntity.ok(documents);
     }
 
     //to review the client's document
-    @PostMapping("/reviewdocument")
+    @PostMapping("/review")
     public ResponseEntity<Review> saveOrUpdateReview(@Valid @RequestBody ReviewRequest request) {
 
         Review savedReview = documentService.createOrUpdateReview(request);
@@ -60,7 +56,7 @@ public class DocumentController {
 
 
     //to archive any document
-    @PostMapping("/archivedocument")
+    @PostMapping("/archive")
     public ResponseEntity<ArchiveDocument> archiveDocument(@Valid @RequestBody ArchiveDocumentRequest request) {
 
         ArchiveDocument savedArchiveDocument = documentService.createArchive(request);
@@ -71,7 +67,7 @@ public class DocumentController {
 
     //to edit & update the document
     @PutMapping("/documents/{documentId}")
-    public ResponseEntity<?> editDocumentInfo(@PathVariable UUID documentId, @Valid @RequestBody UpdateDocumentRequest request) {
+    public ResponseEntity<?> updateDocument(@PathVariable UUID documentId, @Valid @RequestBody UpdateDocumentRequest request) {
 
         ClientDocument savedDocument = documentService.updateDocument(documentId, request);
 
@@ -80,7 +76,7 @@ public class DocumentController {
 
 
     // to view list of review section
-    @GetMapping("/viewreviewlog/{applicationTransactionId}")
+    @GetMapping("/reviews/{applicationTransactionId}")
     public ResponseEntity<Review> getReviewByApplicationId(@PathVariable long applicationTransactionId) {
         Optional<Review> reviewOptional = documentService.viewReviewLog(applicationTransactionId);
 
@@ -91,7 +87,7 @@ public class DocumentController {
 
 
     //to view list of edited document setion
-    @GetMapping("/vieweditlog/{applicationTransactionId}")
+    @GetMapping("/archive/{applicationTransactionId}")
     public ResponseEntity<ArchiveDocument> getArchiveDocumentByApplicationTransactionId(@PathVariable long applicationTransactionId) {
         Optional<ArchiveDocument> archiveDocumentOptional = documentService.viewEditLog(applicationTransactionId);
 
@@ -99,7 +95,7 @@ public class DocumentController {
     }
 
     //to add watermark to any document
-    @PostMapping("/addwatermarktodocument")
+    @PostMapping("/watermark")
     public ResponseEntity<ClientDocument> addWatermarkToDocument(@Valid @RequestBody WatermarkRequest watermarkRequest){
         ClientDocument updatedDocument =
                 documentService.addWatermarkToDocument(
@@ -111,12 +107,12 @@ public class DocumentController {
     }
 
     //to set password & make any document confidential
-    @PostMapping("/setadocumentconfidential")
+    @PostMapping("/password")
     public ResponseEntity<String> addPasswordToPdf(@Valid @RequestBody PdfPasswordRequest request) {
-        String result =
+        String protectedPdf =
                 documentService.addPasswordToPdf(request);
 
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(protectedPdf);
     }
 
 }

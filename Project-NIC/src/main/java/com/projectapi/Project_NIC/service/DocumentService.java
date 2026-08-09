@@ -101,7 +101,8 @@ public class DocumentService {
     }
 
     public List<ClientDocument> getDocumentsByPersonId(int personId) {
-        System.out.println("searching for document with personId: " + personId);
+//        System.out.println("searching for document with personId: " + personId);
+
         return documentRepository.findByPersonId(personId);
 
     }
