@@ -6,4 +6,5 @@ public class DocumentNotFoundException extends RuntimeException {
 
         super(message);
     }
+
 }
