@@ -12,7 +12,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection = "reviews")
 public class Review {
 
-    private long application_transaction_id;
+    private long applicationTransactionId;
     private String review;
 
 }

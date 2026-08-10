@@ -3,6 +3,7 @@ package com.projectapi.Project_NIC.service;
 import com.projectapi.Project_NIC.dto.request.*;
 import com.projectapi.Project_NIC.exception.DocumentNotFoundException;
 import com.projectapi.Project_NIC.exception.DocumentProcessingException;
+import com.projectapi.Project_NIC.mapper.DocumentMapper;
 import com.projectapi.Project_NIC.model.ArchiveDocument;
 import com.projectapi.Project_NIC.model.ClientDocument;
 
@@ -25,6 +26,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -36,6 +38,7 @@ public class DocumentService {
     private final MongoTemplate mongoTemplate;
     private final ReviewRepository reviewRepository;
     private final ArchiveRepository archiveRepository;
+    private final DocumentMapper documentMapper;
 
     private static final Logger LOGGER = Logger.getLogger(DocumentService.class.getName());
 
@@ -43,24 +46,14 @@ public class DocumentService {
 
     public UUID saveDocument(CreateDocumentRequest request) {
 
-        ClientDocument document = new ClientDocument();
+        ClientDocument document = documentMapper.toEntity(request);
 
-        document.setDocument_id(UUID.randomUUID());
-        document.setCreated_on(new Date());
-
-        document.setApplication(request.getApplication());
-        document.setModule(request.getModule());
-        document.setWorkflow(request.getWorkflow());
-        document.setFile_information(request.getFileInformation());
-        document.setCreated_by(request.getCreatedBy());
-        document.setCreated_for(request.getCreatedFor());
-        document.setDocument(request.getDocument());
-        document.setAdditional_info_1(request.getAdditionalInfo1());
-        document.setAdditional_info_2(request.getAdditionalInfo2());
+        document.setDocumentId(UUID.randomUUID());
+        document.setCreatedOn(Instant.now());
 
         documentRepository.save(document);
 
-        return document.getDocument_id();
+        return document.getDocumentId();
     }
 
     public ClientDocument updateDocument(
@@ -78,14 +71,9 @@ public class DocumentService {
 
 
         existingDocument.setApplication(request.getApplication());
-        existingDocument.setModule(request.getModule());
-        existingDocument.setWorkflow(request.getWorkflow());
-        existingDocument.setFile_information(request.getFileInformation());
-        existingDocument.setCreated_by(request.getCreatedBy());
-        existingDocument.setCreated_for(request.getCreatedFor());
+        existingDocument.setCreatedBy(request.getCreatedBy());
+        existingDocument.setCreatedFor(request.getCreatedFor());
         existingDocument.setDocument(request.getDocument());
-        existingDocument.setAdditional_info_1(request.getAdditionalInfo1());
-        existingDocument.setAdditional_info_2(request.getAdditionalInfo2());
 
         return documentRepository.save(existingDocument);
     }
@@ -116,7 +104,7 @@ public class DocumentService {
     }
 
     public Review saveOrUpdateReview(Review review) {
-        Optional<Review> existingReview = reviewRepository.findByApplicationTransactionId(review.getApplication_transaction_id());
+        Optional<Review> existingReview = reviewRepository.findByApplicationTransactionId(review.getApplicationTransactionId());
 
         if (existingReview.isPresent()) {
             Review existing = existingReview.get();
@@ -144,10 +132,9 @@ public class DocumentService {
 
         Review review = new Review();
 
-        review.setApplication_transaction_id(
+        review.setApplicationTransactionId(
                 clientDocument.get()
-                        .getFile_information()
-                        .getApplication_transaction_id()
+                        .getApplicationTransactionId()
         );
 
         review.setReview(request.getReview());
@@ -172,7 +159,7 @@ public class DocumentService {
         }
 
         existingDocument.ifPresent(document ->
-                documentRepository.deleteById(document.getDocument_id())
+                documentRepository.deleteById(document.getDocumentId())
         );
 
         ArchiveDocument archiveDocument = new ArchiveDocument();
@@ -209,8 +196,8 @@ public class DocumentService {
         documentRepository.deleteById(documentId);
     }
     public ClientDocument updateDocument(ClientDocument document) {
-        Date date = new Date();
-        document.setCreated_on(date);
+
+        document.setCreatedOn(Instant.now());
         return documentRepository.save(document);
     }
 
@@ -227,7 +214,7 @@ public class DocumentService {
         ClientDocument clientDocument = existingDocument.get();
 
         try{
-            byte[] pdfBytes = Base64.getDecoder().decode(clientDocument.getDocument().getActual_document_base_64());
+            byte[] pdfBytes = Base64.getDecoder().decode(clientDocument.getDocument().getActualDocumentBase64());
 
             PDDocument document = PDDocument.load(new ByteArrayInputStream(pdfBytes));
 
@@ -262,9 +249,9 @@ public class DocumentService {
 
             String base64WatermarkedPdf = Base64.getEncoder().encodeToString(outputStream.toByteArray());
 
-            clientDocument.getDocument().setActual_document_base_64(base64WatermarkedPdf);
+            clientDocument.getDocument().setActualDocumentBase64(base64WatermarkedPdf);
 
-            documentRepository.deleteById(existingDocument.get().getDocument_id());
+            documentRepository.deleteById(existingDocument.get().getDocumentId());
             documentRepository.save(clientDocument);
 
             return clientDocument;
@@ -305,7 +292,7 @@ public class DocumentService {
         ClientDocument clientDocument = existingDocument.get();
 
         try{
-            byte[] pdfBytes = Base64.getDecoder().decode(clientDocument.getDocument().getActual_document_base_64());
+            byte[] pdfBytes = Base64.getDecoder().decode(clientDocument.getDocument().getActualDocumentBase64());
 
             PDDocument document = PDDocument.load(new ByteArrayInputStream(pdfBytes));
 
@@ -326,7 +313,7 @@ public class DocumentService {
             String base64PdfWithPassword = Base64.getEncoder().encodeToString(outputStream.toByteArray());
 
             // Update the ClientDocument with the new Base64 content
-            clientDocument.getDocument().setActual_document_base_64(base64PdfWithPassword);
+            clientDocument.getDocument().setActualDocumentBase64(base64PdfWithPassword);
 
             // Save the updated ClientDocument
             documentRepository.save(clientDocument);

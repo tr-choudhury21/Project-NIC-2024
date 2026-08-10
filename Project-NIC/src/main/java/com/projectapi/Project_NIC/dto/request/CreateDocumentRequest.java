@@ -1,6 +1,9 @@
 package com.projectapi.Project_NIC.dto.request;
 
-import com.projectapi.Project_NIC.model.ClientDocument;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,21 +13,24 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CreateDocumentRequest {
 
-    private ClientDocument.Application application;
+    @Valid
+    @NotNull(message = "Application information is required")
+    private ApplicationRequest application;
 
-    private ClientDocument.Module module;
+    @NotNull(message = "Application transaction ID is required")
+    @Positive(message = "Application transaction ID must be positive")
+    private Long applicationTransactionId;
 
-    private ClientDocument.Workflow workflow;
 
-    private ClientDocument.FileInformation fileInformation;
+    @Valid
+    @NotNull(message = "Created by information is required")
+    private CreatedByRequest createdBy;
 
-    private ClientDocument.CreatedBy createdBy;
+    @Valid
+    @NotNull(message = "Created for information is required")
+    private CreatedForRequest createdFor;
 
-    private ClientDocument.CreatedFor createdFor;
-
-    private ClientDocument.DocumentContent document;
-
-    private ClientDocument.AdditionalInfo additionalInfo1;
-
-    private ClientDocument.AdditionalInfo additionalInfo2;
+    @Valid
+    @NotNull(message = "Document content is required")
+    private DocumentContentRequest document;
 }
