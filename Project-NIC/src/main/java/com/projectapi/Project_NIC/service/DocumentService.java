@@ -1,6 +1,7 @@
 package com.projectapi.Project_NIC.service;
 
 import com.projectapi.Project_NIC.dto.request.*;
+import com.projectapi.Project_NIC.dto.response.DocumentResponse;
 import com.projectapi.Project_NIC.exception.DocumentNotFoundException;
 import com.projectapi.Project_NIC.exception.DocumentProcessingException;
 import com.projectapi.Project_NIC.mapper.DocumentMapper;
@@ -38,7 +39,10 @@ public class DocumentService {
     private final MongoTemplate mongoTemplate;
     private final ReviewRepository reviewRepository;
     private final ArchiveRepository archiveRepository;
+
+    private final PdfService pdfService;
     private final DocumentMapper documentMapper;
+
 
     private static final Logger LOGGER = Logger.getLogger(DocumentService.class.getName());
 
@@ -56,7 +60,7 @@ public class DocumentService {
         return document.getDocumentId();
     }
 
-    public ClientDocument updateDocument(
+    public DocumentResponse updateDocument(
             UUID documentId,
             UpdateDocumentRequest request) {
 
@@ -70,28 +74,34 @@ public class DocumentService {
                         );
 
 
-        existingDocument.setApplication(request.getApplication());
-        existingDocument.setCreatedBy(request.getCreatedBy());
-        existingDocument.setCreatedFor(request.getCreatedFor());
-        existingDocument.setDocument(request.getDocument());
+        documentMapper.updateEntity(existingDocument, request);
 
-        return documentRepository.save(existingDocument);
+        ClientDocument updatedDocument = documentRepository.save(existingDocument);
+
+        return documentMapper.toResponse(updatedDocument);
     }
 
-    public ClientDocument getDocumentById(UUID documentId) {
-        return documentRepository.findById(documentId)
+    public DocumentResponse getDocumentById(UUID documentId) {
+        ClientDocument document = documentRepository
+                .findById(documentId)
                 .orElseThrow(() ->
                         new DocumentNotFoundException(
                                 "Document not found with id: " + documentId
                         )
                 );
 
+        return documentMapper.toResponse(document);
+
     }
 
-    public List<ClientDocument> getDocumentsByPersonId(int personId) {
+    public List<DocumentResponse> getDocumentsByPersonId(int personId) {
 //        System.out.println("searching for document with personId: " + personId);
 
-        return documentRepository.findByPersonId(personId);
+        List<ClientDocument> documents = documentRepository.findByCreatedForPersonId(personId);
+
+        return documents.stream()
+                .map(documentMapper::toResponse)
+                .toList();
 
     }
 
@@ -103,168 +113,120 @@ public class DocumentService {
         );
     }
 
-    public Review saveOrUpdateReview(Review review) {
-        Optional<Review> existingReview = reviewRepository.findByApplicationTransactionId(review.getApplicationTransactionId());
+    public Review saveOrUpdateReview(ReviewRequest request) {
+
+                documentRepository.findByApplicationTransactionId(
+                        request.getApplicationTransactionId()
+                ).orElseThrow(() ->
+                        new DocumentNotFoundException(
+                                "Document not found for application transaction id: "
+                                        + request.getApplicationTransactionId()
+                        )
+                );
+
+        Optional<Review> existingReview =
+                reviewRepository.findByApplicationTransactionId(
+                        request.getApplicationTransactionId()
+                );
 
         if (existingReview.isPresent()) {
+
             Review existing = existingReview.get();
-            existing.setReview(review.getReview());
+            existing.setReview(request.getReview());
 
             return reviewRepository.save(existing);
         }
 
+        Review review = Review.builder()
+                .applicationTransactionId(
+                        request.getApplicationTransactionId()
+                )
+                .review(request.getReview())
+                .build();
+
         return reviewRepository.save(review);
     }
 
-    public Review createOrUpdateReview(ReviewRequest request) {
-
-        Optional<ClientDocument> clientDocument =
-                documentRepository.findByApplicationTransactionId(
-                        request.getApplicationTransactionId()
-                );
-
-        if (clientDocument.isEmpty()) {
-            throw new DocumentNotFoundException(
-                    "Document not found for application transaction id: "
-                            + request.getApplicationTransactionId()
-            );
-        }
-
-        Review review = new Review();
-
-        review.setApplicationTransactionId(
-                clientDocument.get()
-                        .getApplicationTransactionId()
-        );
-
-        review.setReview(request.getReview());
-
-        return saveOrUpdateReview(review);
-    }
 
     public ArchiveDocument archiveDocument(ArchiveDocumentRequest request) {
 
         Optional<ArchiveDocument> existingArchive = archiveRepository.findByApplicationTransactionId(request.getApplicationTransactionId());
-        Optional<ClientDocument> existingDocument = documentRepository.findByApplicationTransactionId(request.getApplicationTransactionId());
+        ClientDocument existingDocument = documentRepository.findByApplicationTransactionId(request.getApplicationTransactionId()).orElseThrow(() ->
+                new DocumentNotFoundException(
+                        "Document not found for application transaction id: "
+                                + request.getApplicationTransactionId()
+                )
+        );
 
         if (existingArchive.isPresent()) {
 
             ArchiveDocument archiveDocument = existingArchive.get();
 
-            archiveDocument.setArchival_comments(
+            archiveDocument.setArchivalComments(
                     request.getArchivalComments()
             );
 
             return archiveRepository.save(archiveDocument);
         }
 
-        existingDocument.ifPresent(document ->
-                documentRepository.deleteById(document.getDocumentId())
+
+        ArchiveDocument archive = ArchiveDocument.builder()
+                .applicationTransactionId(
+                        request.getApplicationTransactionId()
+                )
+                .archivalComments(
+                        request.getArchivalComments()
+                )
+                .build();
+
+        documentRepository.deleteById(
+                existingDocument.getDocumentId()
         );
 
-        ArchiveDocument archiveDocument = new ArchiveDocument();
-
-        archiveDocument.setApplication_transaction_id(
-                request.getApplicationTransactionId()
-        );
-
-        archiveDocument.setArchival_comments(
-                request.getArchivalComments()
-        );
-
-        return archiveRepository.save(archiveDocument);
+        return archiveRepository.save(archive);
     }
 
-    public ArchiveDocument createArchive(ArchiveDocumentRequest request) {
+//    public void deleteDocumentById(UUID documentId) {
+//        documentRepository.deleteById(documentId);
+//    }
+////    public ClientDocument updateDocument(ClientDocument document) {
+////
+////        document.setCreatedOn(Instant.now());
+////        return documentRepository.save(document);
+////    }
 
-        Optional<ClientDocument> clientDocument =
+    public DocumentResponse addWatermarkToDocument(
+            WatermarkRequest request) {
+
+        ClientDocument clientDocument =
                 documentRepository.findByApplicationTransactionId(
                         request.getApplicationTransactionId()
+                ).orElseThrow(() ->
+                        new DocumentNotFoundException(
+                                "Document not found for application transaction id: "
+                                        + request.getApplicationTransactionId()
+                        )
                 );
 
-        if (clientDocument.isEmpty()) {
-            throw new DocumentNotFoundException(
-                    "Document not found for application transaction id: "
-                            + request.getApplicationTransactionId()
-            );
-        }
+        String watermarkedPdf =
+                pdfService.addWatermark(
+                        clientDocument
+                                .getDocument()
+                                .getActualDocumentBase64(),
+                        request.getWatermark()
+                );
 
-        return archiveDocument(request);
+        clientDocument
+                .getDocument()
+                .setActualDocumentBase64(
+                        watermarkedPdf
+                );
+
+        ClientDocument updatedDocument =
+                documentRepository.save(clientDocument);
+
+        return documentMapper.toResponse(updatedDocument);
     }
-
-    public void deleteDocumentById(UUID documentId) {
-        documentRepository.deleteById(documentId);
-    }
-    public ClientDocument updateDocument(ClientDocument document) {
-
-        document.setCreatedOn(Instant.now());
-        return documentRepository.save(document);
-    }
-
-    public ClientDocument addWatermarkToDocument(long applicationTransactionId, String watermark) {
-        Optional<ClientDocument> existingDocument = documentRepository.findByApplicationTransactionId(applicationTransactionId);
-
-        if (existingDocument.isEmpty()) {
-            throw new DocumentNotFoundException(
-                    "Document not found for application transaction id: "
-                            + applicationTransactionId
-            );
-        }
-
-        ClientDocument clientDocument = existingDocument.get();
-
-        try{
-            byte[] pdfBytes = Base64.getDecoder().decode(clientDocument.getDocument().getActualDocumentBase64());
-
-            PDDocument document = PDDocument.load(new ByteArrayInputStream(pdfBytes));
-
-            //loop to add watermark to each page
-            for(PDPage page : document.getPages()){
-                PDRectangle pageSize = page.getMediaBox();
-                float pageWidth = pageSize.getWidth();
-                float pageHeight = pageSize.getHeight();
-
-                PDPageContentStream contentStream = new PDPageContentStream(document, page, PDPageContentStream.AppendMode.PREPEND, true, true);
-                contentStream.setFont(PDType1Font.HELVETICA_BOLD, 70);
-                contentStream.setNonStrokingColor(200, 200, 200);    //Light Grey colour
-
-
-                float stringWidth = PDType1Font.HELVETICA_BOLD.getStringWidth(watermark) / 1000 * 50;
-                float stringHeight = PDType1Font.HELVETICA_BOLD.getFontDescriptor().getCapHeight() / 1000 * 50;
-
-                //calculating middle coordinates
-                float centerX = (pageWidth - stringWidth) / 2;
-                float centerY = (pageHeight - stringHeight) / 3;
-
-                contentStream.beginText();
-                contentStream.setTextMatrix(Matrix.getRotateInstance(Math.toRadians(45), centerX, centerY));  // adjust the position and angle as required
-                contentStream.showText(watermark);
-                contentStream.endText();
-                contentStream.close();
-            }
-
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            document.save(outputStream);
-            document.close();
-
-            String base64WatermarkedPdf = Base64.getEncoder().encodeToString(outputStream.toByteArray());
-
-            clientDocument.getDocument().setActualDocumentBase64(base64WatermarkedPdf);
-
-            documentRepository.deleteById(existingDocument.get().getDocumentId());
-            documentRepository.save(clientDocument);
-
-            return clientDocument;
-        } catch (IOException e){
-            throw new DocumentProcessingException(
-                    "Failed to process PDF document",
-                    e
-            );
-        }
-
-    }
-
-
 
 
 
@@ -280,51 +242,34 @@ public class DocumentService {
 
 
     public String addPasswordToPdf(PdfPasswordRequest request) {
-        Optional<ClientDocument> existingDocument = documentRepository.findByApplicationTransactionId(request.getApplicationTransactionId());
 
-        if (existingDocument.isEmpty()) {
-            throw new DocumentNotFoundException(
-                    "Document not found for application transaction id: "
-                            + request.getApplicationTransactionId()
-            );
-        }
+        ClientDocument clientDocument =
+                documentRepository.findByApplicationTransactionId(
+                        request.getApplicationTransactionId()
+                ).orElseThrow(() ->
+                        new DocumentNotFoundException(
+                                "Document not found for application transaction id: "
+                                        + request.getApplicationTransactionId()
+                        )
+                );
 
-        ClientDocument clientDocument = existingDocument.get();
+        String protectedPdf =
+                pdfService.addPassword(
+                        clientDocument
+                                .getDocument()
+                                .getActualDocumentBase64(),
+                        request.getPassword()
+                );
 
-        try{
-            byte[] pdfBytes = Base64.getDecoder().decode(clientDocument.getDocument().getActualDocumentBase64());
+        clientDocument
+                .getDocument()
+                .setActualDocumentBase64(
+                        protectedPdf
+                );
 
-            PDDocument document = PDDocument.load(new ByteArrayInputStream(pdfBytes));
+        documentRepository.save(clientDocument);
 
-            // Set the password protection
-            AccessPermission accessPermission = new AccessPermission();
-            StandardProtectionPolicy protectionPolicy = new StandardProtectionPolicy(
-                    request.getPassword(), request.getPassword(), accessPermission);
-
-            // Customize the protection policy if necessary
-            protectionPolicy.setEncryptionKeyLength(128);  // 128-bit key length
-            protectionPolicy.setPermissions(accessPermission);
-            document.protect(protectionPolicy);
-
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            document.save(outputStream);
-            document.close();
-
-            String base64PdfWithPassword = Base64.getEncoder().encodeToString(outputStream.toByteArray());
-
-            // Update the ClientDocument with the new Base64 content
-            clientDocument.getDocument().setActualDocumentBase64(base64PdfWithPassword);
-
-            // Save the updated ClientDocument
-            documentRepository.save(clientDocument);
-
-            return base64PdfWithPassword;
-        } catch (IOException e){
-            throw new DocumentProcessingException(
-                    "Failed to process PDF document",
-                    e
-            );
-        }
+        return protectedPdf;
     }
 
 

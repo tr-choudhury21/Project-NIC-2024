@@ -8,6 +8,5 @@ import java.util.Optional;
 
 public interface ReviewRepository extends MongoRepository<Review, String> {
 
-    @Query("{'applicationTransactionId' :  ?0 }")
-    Optional<Review> findByApplicationTransactionId(long application_id);
+    Optional<Review> findByApplicationTransactionId(long applicationTransactionId);
 }

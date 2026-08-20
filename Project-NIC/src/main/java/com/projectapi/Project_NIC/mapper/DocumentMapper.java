@@ -2,6 +2,7 @@ package com.projectapi.Project_NIC.mapper;
 
 
 import com.projectapi.Project_NIC.dto.request.*;
+import com.projectapi.Project_NIC.dto.response.*;
 import com.projectapi.Project_NIC.model.ClientDocument;
 import org.springframework.stereotype.Component;
 
@@ -58,4 +59,83 @@ public class DocumentMapper {
                 .actualDocumentBase64(request.getActualDocumentBase64())
                 .build();
     }
+
+
+    public DocumentResponse toResponse(ClientDocument document) {
+
+        return DocumentResponse.builder()
+                .documentId(document.getDocumentId())
+                .createdOn(document.getCreatedOn())
+                .applicationTransactionId(document.getApplicationTransactionId())
+                .application(toApplicationResponse(document.getApplication()))
+                .createdBy(toCreatedByResponse(document.getCreatedBy()))
+                .createdFor(toCreatedForResponse(document.getCreatedFor()))
+                .document(toDocumentContentResponse(document.getDocument()))
+                .build();
+    }
+
+    private ApplicationResponse toApplicationResponse(
+            ClientDocument.Application application) {
+
+        return ApplicationResponse.builder()
+                .applicationId(application.getApplicationId())
+                .applicationName(application.getApplicationName())
+                .build();
+    }
+
+    private CreatedByResponse toCreatedByResponse(
+            ClientDocument.CreatedBy createdBy) {
+
+        return CreatedByResponse.builder()
+                .employeeCode(createdBy.getEmployeeCode())
+                .employeeName(createdBy.getEmployeeName())
+                .designation(createdBy.getDesignation())
+                .organization(createdBy.getOrganization())
+                .build();
+    }
+
+    private CreatedForResponse toCreatedForResponse(
+            ClientDocument.CreatedFor createdFor) {
+
+        return CreatedForResponse.builder()
+                .personId(createdFor.getPersonId())
+                .name(createdFor.getName())
+                .gender(createdFor.getGender())
+                .age(createdFor.getAge())
+                .mobileNumber(createdFor.getMobileNumber())
+                .build();
+    }
+
+    private DocumentContentResponse toDocumentContentResponse(
+            ClientDocument.DocumentContent documentContent) {
+
+        return DocumentContentResponse.builder()
+                .actualDocumentBase64(
+                        documentContent.getActualDocumentBase64()
+                )
+                .build();
+    }
+
+    public void updateEntity(
+            ClientDocument document,
+            UpdateDocumentRequest request) {
+
+        document.setApplication(
+                toApplication(request.getApplication())
+        );
+
+        document.setCreatedBy(
+                toCreatedBy(request.getCreatedBy())
+        );
+
+        document.setCreatedFor(
+                toCreatedFor(request.getCreatedFor())
+        );
+
+        document.setDocument(
+                toDocumentContent(request.getDocument())
+        );
+    }
+
+
 }

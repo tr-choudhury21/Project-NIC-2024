@@ -8,6 +8,6 @@ import java.util.Optional;
 
 public interface ArchiveRepository extends MongoRepository<ArchiveDocument, Long> {
 
-    @Query("{'application_transaction_id' :  ?0 }")
-    Optional<ArchiveDocument> findByApplicationTransactionId(Long applicationTransactionId);
+
+    Optional<ArchiveDocument> findByApplicationTransactionId(long applicationTransactionId);
 }

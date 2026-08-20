@@ -9,10 +9,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface DocumentRepository extends MongoRepository<ClientDocument, UUID> {
-    @Query("{'createdFor.personId': ?0}")
-    List<ClientDocument> findByPersonId(int personId);
 
-    @Query("{'applicationTransactionId': ?0}")
+    List<ClientDocument> findByCreatedForPersonId(int personId);
+
+
     Optional<ClientDocument> findByApplicationTransactionId(long applicationId);
 
 }
