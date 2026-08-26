@@ -3,6 +3,7 @@ package com.projectapi.Project_NIC.service;
 import com.projectapi.Project_NIC.auth.AuthenticationRequest;
 import com.projectapi.Project_NIC.auth.AuthenticationResponse;
 import com.projectapi.Project_NIC.auth.RegisterRequest;
+import com.projectapi.Project_NIC.dto.response.InitResponse;
 import com.projectapi.Project_NIC.filter.JwtService;
 import com.projectapi.Project_NIC.model.Role;
 import com.projectapi.Project_NIC.model.Client;
@@ -54,13 +55,15 @@ public class AuthenticationService {
         return AuthenticationResponse.builder().token(jwtToken).build();
     }
 
-    public AuthenticationResponse init(AuthenticationRequest request) {
+    public InitResponse init(AuthenticationRequest request) {
 
         if (clientRepository
                 .findByClientId(request.getClient_id())
                 .isPresent()) {
 
-            return authenticate(request);
+            AuthenticationResponse response = authenticate(request);
+
+            return new InitResponse(response, false);
 
         }
 
@@ -69,7 +72,9 @@ public class AuthenticationService {
         registerRequest.setClient_id(request.getClient_id());
         registerRequest.setClient_secret(request.getClient_secret());
 
-        return register(registerRequest);
+        AuthenticationResponse response = register(registerRequest);
+
+        return new InitResponse(response, true);
     }
 
     public boolean clientExists(String clientId) {

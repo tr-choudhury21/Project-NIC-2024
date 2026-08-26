@@ -3,6 +3,7 @@ package com.projectapi.Project_NIC.controller;
 import com.projectapi.Project_NIC.auth.AuthenticationRequest;
 import com.projectapi.Project_NIC.auth.AuthenticationResponse;
 import com.projectapi.Project_NIC.auth.RegisterRequest;
+import com.projectapi.Project_NIC.dto.response.InitResponse;
 import com.projectapi.Project_NIC.repository.ClientRepository;
 import com.projectapi.Project_NIC.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
@@ -22,10 +23,16 @@ public class AuthController {
 
     @PostMapping("/init")
     public ResponseEntity<AuthenticationResponse> init(@RequestBody AuthenticationRequest request){
-        AuthenticationResponse response =
-                authenticationService.init(request);
 
-        return ResponseEntity.ok(response);
+        InitResponse result = authenticationService.init(request);
+
+        if (result.isRegistered()) {
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(result.getAuthenticationResponse());
+        }
+
+        return ResponseEntity.ok(result.getAuthenticationResponse());
 
     }
 }
