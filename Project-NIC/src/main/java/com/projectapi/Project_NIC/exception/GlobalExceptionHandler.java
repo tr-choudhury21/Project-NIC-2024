@@ -92,4 +92,13 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(response);
     }
+
+    @ExceptionHandler(DocumentAlreadyArchivedException.class)
+    public ResponseEntity<String> handleDocumentAlreadyArchived(
+            DocumentAlreadyArchivedException exception) {
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(exception.getMessage());
+    }
 }

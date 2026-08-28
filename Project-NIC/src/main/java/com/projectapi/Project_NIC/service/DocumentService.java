@@ -2,6 +2,8 @@ package com.projectapi.Project_NIC.service;
 
 import com.projectapi.Project_NIC.dto.request.*;
 import com.projectapi.Project_NIC.dto.response.DocumentResponse;
+import com.projectapi.Project_NIC.dto.response.ReviewResponse;
+import com.projectapi.Project_NIC.exception.DocumentAlreadyArchivedException;
 import com.projectapi.Project_NIC.exception.DocumentNotFoundException;
 import com.projectapi.Project_NIC.exception.DocumentProcessingException;
 import com.projectapi.Project_NIC.mapper.DocumentMapper;
@@ -44,7 +46,6 @@ public class DocumentService {
     private final DocumentMapper documentMapper;
 
 
-    private static final Logger LOGGER = Logger.getLogger(DocumentService.class.getName());
 
 
 
@@ -113,7 +114,7 @@ public class DocumentService {
         );
     }
 
-    public Review saveOrUpdateReview(ReviewRequest request) {
+    public ReviewResponse saveOrUpdateReview(ReviewRequest request) {
 
                 documentRepository.findByApplicationTransactionId(
                         request.getApplicationTransactionId()
@@ -124,18 +125,7 @@ public class DocumentService {
                         )
                 );
 
-        Optional<Review> existingReview =
-                reviewRepository.findByApplicationTransactionId(
-                        request.getApplicationTransactionId()
-                );
 
-        if (existingReview.isPresent()) {
-
-            Review existing = existingReview.get();
-            existing.setReview(request.getReview());
-
-            return reviewRepository.save(existing);
-        }
 
         Review review = Review.builder()
                 .applicationTransactionId(
@@ -144,56 +134,52 @@ public class DocumentService {
                 .review(request.getReview())
                 .build();
 
-        return reviewRepository.save(review);
+        Review savedReview = reviewRepository.save(review);
+
+        return documentMapper.toReviewResponse(savedReview);
     }
 
 
     public ArchiveDocument archiveDocument(ArchiveDocumentRequest request) {
 
-        Optional<ArchiveDocument> existingArchive = archiveRepository.findByApplicationTransactionId(request.getApplicationTransactionId());
-        ClientDocument existingDocument = documentRepository.findByApplicationTransactionId(request.getApplicationTransactionId()).orElseThrow(() ->
-                new DocumentNotFoundException(
-                        "Document not found for application transaction id: "
-                                + request.getApplicationTransactionId()
-                )
-        );
+        // 1. Check whether the document has already been archived
+        if (archiveRepository
+                .findByApplicationTransactionId(request.getApplicationTransactionId())
+                .isPresent()) {
 
-        if (existingArchive.isPresent()) {
-
-            ArchiveDocument archiveDocument = existingArchive.get();
-
-            archiveDocument.setArchivalComments(
-                    request.getArchivalComments()
+            throw new DocumentAlreadyArchivedException(
+                    "Document is already archived for application transaction id: "
+                            + request.getApplicationTransactionId()
             );
-
-            return archiveRepository.save(archiveDocument);
         }
 
+        // 2. Find the active document
+        ClientDocument existingDocument =
+                documentRepository
+                        .findByApplicationTransactionId(
+                                request.getApplicationTransactionId()
+                        )
+                        .orElseThrow(() ->
+                                new DocumentNotFoundException(
+                                        "Document not found for application transaction id: "
+                                                + request.getApplicationTransactionId()
+                                )
+                        );
 
-        ArchiveDocument archive = ArchiveDocument.builder()
-                .applicationTransactionId(
-                        request.getApplicationTransactionId()
-                )
-                .archivalComments(
-                        request.getArchivalComments()
-                )
-                .build();
+        // 3. Create archive record
+        ArchiveDocument archive =
+                ArchiveDocument.builder()
+                        .applicationTransactionId(request.getApplicationTransactionId())
+                        .archivalComments(request.getArchivalComments())
+                        .build();
 
-        documentRepository.deleteById(
-                existingDocument.getDocumentId()
-        );
+        // 4. Remove document from active collection
+        documentRepository.deleteById(existingDocument.getDocumentId());
 
+        // 5. Save archive record
         return archiveRepository.save(archive);
     }
 
-//    public void deleteDocumentById(UUID documentId) {
-//        documentRepository.deleteById(documentId);
-//    }
-////    public ClientDocument updateDocument(ClientDocument document) {
-////
-////        document.setCreatedOn(Instant.now());
-////        return documentRepository.save(document);
-////    }
 
     public DocumentResponse addWatermarkToDocument(
             WatermarkRequest request) {
@@ -241,7 +227,7 @@ public class DocumentService {
     }
 
 
-    public String addPasswordToPdf(PdfPasswordRequest request) {
+    public DocumentResponse addPasswordToPdf(PdfPasswordRequest request) {
 
         ClientDocument clientDocument =
                 documentRepository.findByApplicationTransactionId(
@@ -267,9 +253,9 @@ public class DocumentService {
                         protectedPdf
                 );
 
-        documentRepository.save(clientDocument);
+        ClientDocument updatedDocument = documentRepository.save(clientDocument);
 
-        return protectedPdf;
+        return documentMapper.toResponse(updatedDocument);
     }
 
 

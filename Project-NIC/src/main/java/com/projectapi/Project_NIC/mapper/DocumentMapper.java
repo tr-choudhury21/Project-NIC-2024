@@ -4,6 +4,7 @@ package com.projectapi.Project_NIC.mapper;
 import com.projectapi.Project_NIC.dto.request.*;
 import com.projectapi.Project_NIC.dto.response.*;
 import com.projectapi.Project_NIC.model.ClientDocument;
+import com.projectapi.Project_NIC.model.Review;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -113,6 +114,16 @@ public class DocumentMapper {
                 .actualDocumentBase64(
                         documentContent.getActualDocumentBase64()
                 )
+                .build();
+    }
+
+    public ReviewResponse toReviewResponse(Review review){
+
+        if(review == null) return null;
+
+        return ReviewResponse.builder()
+                .applicationTransactionId(review.getApplicationTransactionId())
+                .review(review.getReview())
                 .build();
     }
 

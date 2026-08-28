@@ -2,6 +2,7 @@ package com.projectapi.Project_NIC.controller;
 
 import com.projectapi.Project_NIC.dto.request.*;
 import com.projectapi.Project_NIC.dto.response.DocumentResponse;
+import com.projectapi.Project_NIC.dto.response.ReviewResponse;
 import com.projectapi.Project_NIC.model.*;
 import com.projectapi.Project_NIC.service.DocumentService;
 import jakarta.validation.Valid;
@@ -48,9 +49,9 @@ public class DocumentController {
 
     //to review the client's document
     @PostMapping("/review")
-    public ResponseEntity<Review> saveOrUpdateReview(@Valid @RequestBody ReviewRequest request) {
+    public ResponseEntity<ReviewResponse> saveOrUpdateReview(@Valid @RequestBody ReviewRequest request) {
 
-        Review savedReview = documentService.saveOrUpdateReview(request);
+        ReviewResponse savedReview = documentService.saveOrUpdateReview(request);
 
         return ResponseEntity.ok(savedReview);
     }
@@ -68,7 +69,7 @@ public class DocumentController {
 
     //to edit & update the document
     @PutMapping("/{documentId}")
-    public ResponseEntity<?> updateDocument(@PathVariable UUID documentId, @Valid @RequestBody UpdateDocumentRequest request) {
+    public ResponseEntity<DocumentResponse> updateDocument(@PathVariable UUID documentId, @Valid @RequestBody UpdateDocumentRequest request) {
 
         return ResponseEntity.ok(documentService.updateDocument(documentId, request));
     }
@@ -105,9 +106,9 @@ public class DocumentController {
 
     //to set password & make any document confidential
     @PostMapping("/password")
-    public ResponseEntity<String> addPasswordToPdf(@Valid @RequestBody PdfPasswordRequest request) {
+    public ResponseEntity<DocumentResponse> addPasswordToPdf(@Valid @RequestBody PdfPasswordRequest request) {
 
-        String protectedPdf = documentService.addPasswordToPdf(request);
+        DocumentResponse protectedPdf = documentService.addPasswordToPdf(request);
 
         return ResponseEntity.ok(protectedPdf);
     }
