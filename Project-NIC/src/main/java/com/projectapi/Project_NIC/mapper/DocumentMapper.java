@@ -3,6 +3,7 @@ package com.projectapi.Project_NIC.mapper;
 
 import com.projectapi.Project_NIC.dto.request.*;
 import com.projectapi.Project_NIC.dto.response.*;
+import com.projectapi.Project_NIC.model.ArchiveDocument;
 import com.projectapi.Project_NIC.model.ClientDocument;
 import com.projectapi.Project_NIC.model.Review;
 import org.springframework.stereotype.Component;
@@ -124,6 +125,16 @@ public class DocumentMapper {
         return ReviewResponse.builder()
                 .applicationTransactionId(review.getApplicationTransactionId())
                 .review(review.getReview())
+                .build();
+    }
+
+    public ArchiveResponse toArchiveResponse(ArchiveDocument archiveDocument){
+
+        if(archiveDocument == null) return null;
+
+        return ArchiveResponse.builder()
+                .applicationTransactionId(archiveDocument.getApplicationTransactionId())
+                .archivalComments(archiveDocument.getArchivalComments())
                 .build();
     }
 

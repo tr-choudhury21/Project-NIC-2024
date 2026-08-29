@@ -9,7 +9,7 @@ import lombok.Data;
 public class ArchiveDocumentRequest {
 
     @Positive(message = "Application transaction ID must be positive")
-    private long applicationTransactionId;
+    private Long applicationTransactionId;
 
     @NotBlank(message = "Archival comments are required")
     @Size(

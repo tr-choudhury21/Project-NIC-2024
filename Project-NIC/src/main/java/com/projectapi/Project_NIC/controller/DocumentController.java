@@ -1,6 +1,7 @@
 package com.projectapi.Project_NIC.controller;
 
 import com.projectapi.Project_NIC.dto.request.*;
+import com.projectapi.Project_NIC.dto.response.ArchiveResponse;
 import com.projectapi.Project_NIC.dto.response.DocumentResponse;
 import com.projectapi.Project_NIC.dto.response.ReviewResponse;
 import com.projectapi.Project_NIC.model.*;
@@ -59,9 +60,9 @@ public class DocumentController {
 
     //to archive any document
     @PostMapping("/archive")
-    public ResponseEntity<ArchiveDocument> archiveDocument(@Valid @RequestBody ArchiveDocumentRequest request) {
+    public ResponseEntity<ArchiveResponse> archiveDocument(@Valid @RequestBody ArchiveDocumentRequest request) {
 
-        ArchiveDocument savedArchiveDocument = documentService.archiveDocument(request);
+        ArchiveResponse savedArchiveDocument = documentService.archiveDocument(request);
 
         return ResponseEntity.ok(savedArchiveDocument);
     }

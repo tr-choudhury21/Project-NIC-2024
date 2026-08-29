@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.dao.DuplicateKeyException;
 
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
@@ -96,6 +97,24 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DocumentAlreadyArchivedException.class)
     public ResponseEntity<String> handleDocumentAlreadyArchived(
             DocumentAlreadyArchivedException exception) {
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(exception.getMessage());
+    }
+
+    @ExceptionHandler(DuplicateKeyException.class)
+    public ResponseEntity<String> handleDuplicateKeyException(
+            DuplicateKeyException exception) {
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body("A document already exists for the provided application transaction ID");
+    }
+
+    @ExceptionHandler(DuplicateDocumentException.class)
+    public ResponseEntity<String> handleDuplicateDocument(
+            DuplicateDocumentException exception) {
 
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)

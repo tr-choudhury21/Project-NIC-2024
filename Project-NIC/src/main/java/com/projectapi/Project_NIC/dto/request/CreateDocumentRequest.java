@@ -17,7 +17,7 @@ public class CreateDocumentRequest {
     @NotNull(message = "Application information is required")
     private ApplicationRequest application;
 
-
+    @NotNull(message = "Application transaction ID is required")
     @Positive(message = "Application transaction ID must be positive")
     private Long applicationTransactionId;
 

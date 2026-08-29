@@ -1,11 +1,13 @@
 package com.projectapi.Project_NIC.service;
 
 import com.projectapi.Project_NIC.dto.request.*;
+import com.projectapi.Project_NIC.dto.response.ArchiveResponse;
 import com.projectapi.Project_NIC.dto.response.DocumentResponse;
 import com.projectapi.Project_NIC.dto.response.ReviewResponse;
 import com.projectapi.Project_NIC.exception.DocumentAlreadyArchivedException;
 import com.projectapi.Project_NIC.exception.DocumentNotFoundException;
 import com.projectapi.Project_NIC.exception.DocumentProcessingException;
+import com.projectapi.Project_NIC.exception.DuplicateDocumentException;
 import com.projectapi.Project_NIC.mapper.DocumentMapper;
 import com.projectapi.Project_NIC.model.ArchiveDocument;
 import com.projectapi.Project_NIC.model.ClientDocument;
@@ -25,6 +27,7 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.util.Matrix;
 import org.springframework.stereotype.Service;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -51,14 +54,28 @@ public class DocumentService {
 
     public UUID saveDocument(CreateDocumentRequest request) {
 
+        Long applicationTransactionId =
+                request.getApplicationTransactionId();
+
+        if (documentRepository
+                .findByApplicationTransactionId(
+                        applicationTransactionId
+                )
+                .isPresent()) {
+
+            throw new DuplicateDocumentException(
+                    "Document already exists for application transaction id: "
+                            + applicationTransactionId
+            );
+        }
+
         ClientDocument document = documentMapper.toEntity(request);
 
         document.setDocumentId(UUID.randomUUID());
         document.setCreatedOn(Instant.now());
 
-        documentRepository.save(document);
+       return documentRepository.save(document).getDocumentId();
 
-        return document.getDocumentId();
     }
 
     public DocumentResponse updateDocument(
@@ -139,8 +156,8 @@ public class DocumentService {
         return documentMapper.toReviewResponse(savedReview);
     }
 
-
-    public ArchiveDocument archiveDocument(ArchiveDocumentRequest request) {
+    @Transactional
+    public ArchiveResponse archiveDocument(ArchiveDocumentRequest request) {
 
         // 1. Check whether the document has already been archived
         if (archiveRepository
@@ -177,7 +194,10 @@ public class DocumentService {
         documentRepository.deleteById(existingDocument.getDocumentId());
 
         // 5. Save archive record
-        return archiveRepository.save(archive);
+        ArchiveDocument savedArchive = archiveRepository.save(archive);
+
+        return documentMapper.toArchiveResponse(savedArchive);
+
     }
 
 

@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
@@ -14,6 +15,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection = "archive_documents")
 public class ArchiveDocument {
 
-    private long applicationTransactionId;
+    @Indexed(unique = true)
+    private Long applicationTransactionId;
     private String archivalComments;
 }
