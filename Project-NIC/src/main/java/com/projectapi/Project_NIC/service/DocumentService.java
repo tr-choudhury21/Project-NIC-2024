@@ -186,8 +186,32 @@ public class DocumentService {
         // 3. Create archive record
         ArchiveDocument archive =
                 ArchiveDocument.builder()
-                        .applicationTransactionId(request.getApplicationTransactionId())
-                        .archivalComments(request.getArchivalComments())
+                        .archiveId(UUID.randomUUID())
+                        .applicationTransactionId(
+                                existingDocument.getApplicationTransactionId()
+                        )
+                        .archivedOn(Instant.now())
+                        .archivalComments(
+                                request.getArchivalComments()
+                        )
+                        .originalDocumentId(
+                                existingDocument.getDocumentId()
+                        )
+                        .originalCreatedOn(
+                                existingDocument.getCreatedOn()
+                        )
+                        .application(
+                                existingDocument.getApplication()
+                        )
+                        .createdBy(
+                                existingDocument.getCreatedBy()
+                        )
+                        .createdFor(
+                                existingDocument.getCreatedFor()
+                        )
+                        .document(
+                                existingDocument.getDocument()
+                        )
                         .build();
 
         // 4. Remove document from active collection

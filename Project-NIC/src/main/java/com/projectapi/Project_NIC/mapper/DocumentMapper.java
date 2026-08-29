@@ -133,8 +133,42 @@ public class DocumentMapper {
         if(archiveDocument == null) return null;
 
         return ArchiveResponse.builder()
-                .applicationTransactionId(archiveDocument.getApplicationTransactionId())
-                .archivalComments(archiveDocument.getArchivalComments())
+                .archiveId(archiveDocument.getArchiveId())
+                .applicationTransactionId(
+                        archiveDocument.getApplicationTransactionId()
+                )
+                .archivedOn(
+                        archiveDocument.getArchivedOn()
+                )
+                .archivalComments(
+                        archiveDocument.getArchivalComments()
+                )
+                .originalDocumentId(
+                        archiveDocument.getOriginalDocumentId()
+                )
+                .originalCreatedOn(
+                        archiveDocument.getOriginalCreatedOn()
+                )
+                .application(
+                        toApplicationResponse(
+                                archiveDocument.getApplication()
+                        )
+                )
+                .createdBy(
+                        toCreatedByResponse(
+                                archiveDocument.getCreatedBy()
+                        )
+                )
+                .createdFor(
+                        toCreatedForResponse(
+                                archiveDocument.getCreatedFor()
+                        )
+                )
+                .document(
+                        toDocumentContentResponse(
+                                archiveDocument.getDocument()
+                        )
+                )
                 .build();
     }
 
