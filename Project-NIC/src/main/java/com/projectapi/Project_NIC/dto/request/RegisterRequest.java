@@ -1,4 +1,4 @@
-package com.projectapi.Project_NIC.auth;
+package com.projectapi.Project_NIC.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class AuthenticationResponse {
-    private String token;
+public class RegisterRequest {
+    private String client_id;
+    private String client_secret;
 }

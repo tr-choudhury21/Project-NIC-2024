@@ -1,8 +1,8 @@
 package com.projectapi.Project_NIC.service;
 
-import com.projectapi.Project_NIC.auth.AuthenticationRequest;
-import com.projectapi.Project_NIC.auth.AuthenticationResponse;
-import com.projectapi.Project_NIC.auth.RegisterRequest;
+import com.projectapi.Project_NIC.dto.request.AuthenticationRequest;
+import com.projectapi.Project_NIC.dto.response.AuthenticationResponse;
+import com.projectapi.Project_NIC.dto.request.RegisterRequest;
 import com.projectapi.Project_NIC.dto.response.InitResponse;
 import com.projectapi.Project_NIC.filter.JwtService;
 import com.projectapi.Project_NIC.model.Role;

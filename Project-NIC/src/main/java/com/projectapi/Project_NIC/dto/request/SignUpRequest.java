@@ -1,4 +1,4 @@
-package com.projectapi.Project_NIC.auth;
+package com.projectapi.Project_NIC.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

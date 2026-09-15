@@ -1,6 +1,5 @@
 package com.projectapi.Project_NIC.dto.response;
 
-import com.projectapi.Project_NIC.auth.AuthenticationResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

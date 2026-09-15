@@ -1,6 +1,6 @@
 package com.projectapi.Project_NIC.service;
 
-import com.projectapi.Project_NIC.auth.SignUpRequest;
+import com.projectapi.Project_NIC.dto.request.SignUpRequest;
 import com.projectapi.Project_NIC.config.DateConfig;
 import com.projectapi.Project_NIC.model.Client;
 import com.projectapi.Project_NIC.repository.ClientRepository;

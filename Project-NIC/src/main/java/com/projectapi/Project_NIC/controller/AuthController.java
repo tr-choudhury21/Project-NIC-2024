@@ -1,10 +1,8 @@
 package com.projectapi.Project_NIC.controller;
 
-import com.projectapi.Project_NIC.auth.AuthenticationRequest;
-import com.projectapi.Project_NIC.auth.AuthenticationResponse;
-import com.projectapi.Project_NIC.auth.RegisterRequest;
+import com.projectapi.Project_NIC.dto.request.AuthenticationRequest;
+import com.projectapi.Project_NIC.dto.response.AuthenticationResponse;
 import com.projectapi.Project_NIC.dto.response.InitResponse;
-import com.projectapi.Project_NIC.repository.ClientRepository;
 import com.projectapi.Project_NIC.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

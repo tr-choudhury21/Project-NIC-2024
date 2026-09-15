@@ -1,6 +1,6 @@
 package com.projectapi.Project_NIC.controller;
 
-import com.projectapi.Project_NIC.auth.SignUpRequest;
+import com.projectapi.Project_NIC.dto.request.SignUpRequest;
 import com.projectapi.Project_NIC.model.Client;
 import com.projectapi.Project_NIC.service.ClientService;
 import org.springframework.beans.factory.annotation.Autowired;
